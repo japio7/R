@@ -1,0 +1,387 @@
+---
+title: "Cause of Deaths 2020"
+author: "Jared Pino"
+date: "3/18/2021"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(flexdashboard)
+```
+
+Lets look at the first few rows of the dataset we are working with. We only need the columns "Jurisdiction", "Year", "Cause.Group", and "Number.of.Deaths".
+```{r, echo=FALSE}
+data <- read.csv('Weekly_counts_of_death_by_jurisdiction_and_cause_of_death.csv')
+
+data <- subset(data, select = -c(Week.Ending.Date, State.Abbreviation, Week, Cause.Subgroup, Time.Period, Suppress, Note, Average.Number.of.Deaths.in.Time.Period, Difference.from.2015.2019.to.2020, Percent.Difference.from.2015.2019.to.2020, Type) )
+
+head(data)
+```
+
+Lets check for null values.
+```{r}
+sum(is.na(data$Number.of.Deaths))
+```
+
+There are 34 null values. Lets look at some of these null values.
+```{r}
+head(filter(data, is.na((data$Number.of.Deaths))))
+```
+
+Lets fill these values with the mean per state per cause of all years and check for null values again.
+```{r, echo=FALSE}
+# Indiana
+indiana_2020_alz <- filter(data, data$Jurisdiction == "Indiana" & data$Cause.Group == "Alzheimer disease and dementia")
+indiana_2020_alz <- mean(c(indiana_2020_alz$Number.of.Deaths) %>% na.omit(indiana_2020_alz)) %>% as.integer(indiana_2020_alz)
+
+indiana_2020_circ <- filter(data, data$Jurisdiction == "Indiana" & data$Cause.Group == "Circulatory diseases")
+indiana_2020_circ <- mean(c(indiana_2020_circ$Number.of.Deaths) %>% na.omit(indiana_2020_circ)) %>% as.integer(indiana_2020_circ)
+
+indiana_2020_malig <- filter(data, data$Jurisdiction == "Indiana" & data$Cause.Group == "Malignant neoplasms")
+indiana_2020_malig <- mean(c(indiana_2020_malig$Number.of.Deaths) %>% na.omit(indiana_2020_malig)) %>% as.integer(indiana_2020_malig)
+
+indiana_2020_resp <- filter(data, data$Jurisdiction == "Indiana" & data$Cause.Group == "Respiratory diseases")
+indiana_2020_resp <- mean(c(indiana_2020_resp$Number.of.Deaths) %>% na.omit(indiana_2020_resp)) %>% as.integer(indiana_2020_resp)
+
+# North Carolina
+northCarolina_2020_alz <- filter(data, data$Jurisdiction == "North Carolina" & data$Cause.Group == "Alzheimer disease and dementia")
+northCarolina_2020_alz <- mean(c(northCarolina_2020_alz$Number.of.Deaths) %>% na.omit(northCarolina_2020_alz)) %>% as.integer(northCarolina_2020_alz)
+
+northCarolina_2020_circ <- filter(data, data$Jurisdiction == "North Carolina" & data$Cause.Group == "Circulatory diseases")
+northCarolina_2020_circ <- mean(c(northCarolina_2020_circ$Number.of.Deaths) %>% na.omit(northCarolina_2020_circ)) %>% as.integer(northCarolina_2020_circ)
+
+northCarolina_2020_malig <- filter(data, data$Jurisdiction == "North Carolina" & data$Cause.Group == "Malignant neoplasms")
+northCarolina_2020_malig <- mean(c(northCarolina_2020_malig$Number.of.Deaths) %>% na.omit(northCarolina_2020_malig)) %>% as.integer(northCarolina_2020_malig)
+
+northCarolina_2020_resp <- filter(data, data$Jurisdiction == "North Carolina" & data$Cause.Group == "Respiratory diseases")
+northCarolina_2020_resp <- mean(c(northCarolina_2020_resp$Number.of.Deaths) %>% na.omit(northCarolina_2020_resp)) %>% as.integer(northCarolina_2020_resp)
+
+northCarolina_2020_other <- filter(data, data$Jurisdiction == "North Carolina" & data$Cause.Group == "Other select causes")
+northCarolina_2020_other <- mean(c(northCarolina_2020_other$Number.of.Deaths) %>% na.omit(northCarolina_2020_other)) %>% as.integer(northCarolina_2020_other)
+
+# Connecticut
+connecticut_2020_circ <- filter(data, data$Jurisdiction == "Connecticut" & data$Cause.Group == "Circulatory diseases")
+connecticut_2020_circ <- mean(c(connecticut_2020_circ$Number.of.Deaths) %>% na.omit(connecticut_2020_circ)) %>% as.integer(connecticut_2020_circ)
+
+connecticut_2020_malig <- filter(data, data$Jurisdiction == "Connecticut" & data$Cause.Group == "Malignant neoplasms")
+connecticut_2020_malig <- mean(c(connecticut_2020_malig$Number.of.Deaths) %>% na.omit(connecticut_2020_malig)) %>% as.integer(connecticut_2020_malig)
+```
+
+```{r, echo=FALSE}
+data <- within(data, Number.of.Deaths[Jurisdiction == 'Indiana' & Cause.Group == 'Alzheimer disease and dementia'] <- indiana_2020_alz)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'Indiana' & Cause.Group == 'Circulatory diseases'] <- indiana_2020_circ)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'Indiana' & Cause.Group == 'Malignant neoplasms'] <- indiana_2020_malig)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'Indiana' & Cause.Group == 'Respiratory diseases'] <- indiana_2020_resp)
+
+data <- within(data, Number.of.Deaths[Jurisdiction == 'North Carolina' & Cause.Group == 'Alzheimer disease and dementia'] <- northCarolina_2020_alz)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'North Carolina' & Cause.Group == 'Circulatory diseases'] <- northCarolina_2020_circ)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'North Carolina' & Cause.Group == 'Malignant neoplasms'] <- northCarolina_2020_malig)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'North Carolina' & Cause.Group == 'Respiratory diseases'] <- northCarolina_2020_resp)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'North Carolina' & Cause.Group == 'Other select causes'] <- northCarolina_2020_other)
+
+data <- within(data, Number.of.Deaths[Jurisdiction == 'Connecticut' & Cause.Group == 'Circulatory diseases'] <- connecticut_2020_circ)
+data <- within(data, Number.of.Deaths[Jurisdiction == 'Connecticut' & Cause.Group == 'Malignant neoplasms'] <- connecticut_2020_malig)
+```
+
+```{r}
+sum(is.na(data$Number.of.Deaths))
+```
+
+
+Since there are no more null values in our data, we can continue with our analysis. There are rows in our data where Jurisdiction is "United States". Lets look at some of these values.
+```{r}
+head(filter(data, data$Jurisdiction == "United States"))
+nrow(filter(data, data$Jurisdiction == "United States"))
+```
+
+
+We need specific Jurisdiction locations so we will drop these rows.
+```{r, echo=FALSE}
+cat("Number of rows before drop: ", nrow(data))
+data <- filter(data, data$Jurisdiction != "United States")
+cat("\nNumber of rows after drop: ", nrow(data))
+```
+
+
+Lets sum the total deaths and total deaths per year.
+```{r, echo=FALSE}
+totalDeaths.all <- sum(data$Number.of.Deaths)
+cat("Total Deaths: ", totalDeaths.all, "\n")
+
+deaths_2015.df <- filter(data, data$Year == "2015")
+deaths_2016.df <- filter(data, data$Year == "2016")
+deaths_2017.df <- filter(data, data$Year == "2017")
+deaths_2018.df <- filter(data, data$Year == "2018")
+deaths_2019.df <- filter(data, data$Year == "2019")
+deaths_2020.df <- filter(data, data$Year == "2020")
+
+deaths.collection <- c(sum(deaths_2015.df$Number.of.Deaths), sum(deaths_2016.df$Number.of.Deaths), sum(deaths_2017.df$Number.of.Deaths), sum(deaths_2018.df$Number.of.Deaths), sum(deaths_2019.df$Number.of.Deaths), sum(deaths_2020.df$Number.of.Deaths))
+
+df.totalDeaths <- data.frame(Year = c(2015, 2016, 2017, 2018, 2019, 2020), Deaths = c(deaths.collection[1], deaths.collection[2], deaths.collection[3], deaths.collection[4], deaths.collection[5], deaths.collection[6]), Death.Percentage = c(deaths.collection[1]/sum(deaths.collection), deaths.collection[2]/sum(deaths.collection), deaths.collection[3]/sum(deaths.collection), deaths.collection[4]/sum(deaths.collection), deaths.collection[5]/sum(deaths.collection), deaths.collection[6]/sum(deaths.collection)))
+
+names(df.totalDeaths) <- c("Year", "Deaths", "Death Rate")
+```
+
+Lets look at the new dataframe
+```{r, echo=FALSE}
+df.totalDeaths
+```
+Lets plot the distance from the mean for number of deaths per year and the total deaths per year.
+```{r, echo=FALSE}
+chart1 <- ggplot(data = df.totalDeaths, aes(x = Year, y = Deaths)) +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  labs(title = "DEATHS PER YEAR", subtitle = "Updated Dec. 9, 2020") +
+  geom_col(fill = df.totalDeaths$Deaths) +
+  geom_text(aes(label = Deaths))
+
+plot(x = df.totalDeaths$Year, y = df.totalDeaths$Deaths, pch = 21, col = "blue", bg = "red3", main = "Distance from the Mean", xlab = "Year", ylab = "Deaths")
+abline(h = mean(deaths.collection), col = 'green')
+
+m <- c()
+
+for (i in 1:6) {
+  lines(c(df.totalDeaths$Year[i], df.totalDeaths$Year[i]), c(mean(df.totalDeaths$Deaths), df.totalDeaths$Deaths[i]), col = 'red')
+  m <- c(m, df.totalDeaths$Deaths[i] - mean(df.totalDeaths$Deaths)) 
+}
+
+m.df <- data.frame(Year = c(2015, 2016, 2017, 2018, 2019, 2020), Mean = mean(df.totalDeaths$Deaths), Deaths.Mean = m)
+
+names(m.df) = c("Year", "Mean", "Deaths Above or Below the Mean")
+
+m.df
+
+plt <-ggplot(data = df.totalDeaths, aes(x = Year, y = Deaths)) +
+  geom_point(aes(col = Deaths), alpha = 1, shape = 4, stroke = 2) +
+  xlab("Year") +
+  ylab("Deaths") +
+  ggtitle(label = "DEATHS PER YEAR") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  geom_line(aes(Year, Deaths))
+plt
+```
+The plot above shows that the number of deaths increase every year. I am just guessing but I believe that this is because the population also increase every year. We will prove that in a different analysis.
+
+
+
+Lets look at the total deaths per cause, with the death rate, and the rank.
+```{r, echo=FALSE}
+# Create Dataframes For Total Categorical Deaths
+alzheimer.df <- filter(data, Cause.Group == "Alzheimer disease and dementia")
+circulatoryDiseases.df <- filter(data, Cause.Group == "Circulatory diseases")
+malignantNeoplasms.df <- filter(data, Cause.Group == "Malignant neoplasms")
+otherSelectCauses.df <- filter(data, Cause.Group == "Other select causes")
+respiratoryDiseases.df <- filter(data, Cause.Group == "Respiratory diseases")
+
+# Total Categorical Deaths
+deaths.alzheimer <- sum(alzheimer.df$Number.of.Deaths)
+deaths.circulatoryDiseases <- sum(circulatoryDiseases.df$Number.of.Deaths)
+deaths.malignantNeoplasms <- sum(malignantNeoplasms.df$Number.of.Deaths)
+deaths.otherSelectCauses <- sum(otherSelectCauses.df$Number.of.Deaths)
+deaths.respiratoryDiseases <- sum(respiratoryDiseases.df$Number.of.Deaths)
+
+# Total Cause Rate
+alz.perc <- deaths.alzheimer/sum(deaths.collection)
+circ.perc <- deaths.circulatoryDiseases/sum(deaths.collection)
+mal.perc <- deaths.malignantNeoplasms/sum(deaths.collection)
+oth.perc <- deaths.otherSelectCauses/sum(deaths.collection)
+resp.perc <- deaths.respiratoryDiseases/sum(deaths.collection)
+
+# Create Dataframe For All Causes Total
+deaths.causes.df <- data.frame(Cause = c("Circulatory diseases", "Malignant neoplasms", "Respiratory diseases", "Alzheimer disease and dementia", "Other select causes"), Deaths = c(deaths.circulatoryDiseases, deaths.malignantNeoplasms, deaths.respiratoryDiseases, deaths.alzheimer, deaths.otherSelectCauses), Death.Rate = c(circ.perc, mal.perc, resp.perc, alz.perc, oth.perc))
+
+# Rank Causes
+deaths.causes.df$Rank <- seq(1,5)
+rank <- seq(1,5)
+
+# Create Matrix
+dc.mat <- rbind(c(deaths.causes.df[,2], deaths.causes.df[,3], rank))
+dc.mat <- matrix(dc.mat, ncol = 3)
+
+dimnames(dc.mat)[[1]] <- c("Circulatory", "Malignant", "Respiratory", "Alzheimer", "Other")
+dimnames(dc.mat)[[2]] <- c("Deaths", "Death Rate", "Rank")
+
+# Create Dataframe
+dc.mat.df <- data.frame(dc.mat)
+
+dc.mat
+dc.mat.df
+```
+
+Lets plot the total deaths by cause.
+```{r, echo=FALSE}
+dc.mat.df <- data.frame(Cause = c("Circulatory", "Malignant", "Respiratory", "Alzheimer", "Other"), Deaths = dc.mat.df$Deaths, Death.Rate = dc.mat.df$Death.Rate, Rank = dc.mat.df$Rank)
+catPlot <-ggplot(data = dc.mat.df, aes(x = Cause, y = Deaths)) +
+  geom_col(aes(Cause), fill = "darkblue") +
+  xlab("Cause") +
+  ylab("Deaths") +
+  ggtitle(label = "DEATHS PER CAUSE") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1))
+catPlot
+```
+The bar plot above shows that Circulatory is the top cause of deaths, followed by Malignant. Alzheimer and Respiratory are really close but not even close to Circulatory and Malignant.
+
+
+Lets look at the deaths by cause and year.
+```{r, echo=FALSE}
+alzheimer.2015.df <- filter(data, Cause.Group == "Alzheimer disease and dementia" & Year == 2015)
+alzheimer.2016.df <- filter(data, Cause.Group == "Alzheimer disease and dementia" & Year == 2016)
+alzheimer.2017.df <- filter(data, Cause.Group == "Alzheimer disease and dementia" & Year == 2017)
+alzheimer.2018.df <- filter(data, Cause.Group == "Alzheimer disease and dementia" & Year == 2018)
+alzheimer.2019.df <- filter(data, Cause.Group == "Alzheimer disease and dementia" & Year == 2019)
+alzheimer.2020.df <- filter(data, Cause.Group == "Alzheimer disease and dementia" & Year == 2020)
+
+circulatory.2015.df <- filter(data, Cause.Group == "Circulatory diseases" & Year == 2015)
+circulatory.2016.df <- filter(data, Cause.Group == "Circulatory diseases" & Year == 2016)
+circulatory.2017.df <- filter(data, Cause.Group == "Circulatory diseases" & Year == 2017)
+circulatory.2018.df <- filter(data, Cause.Group == "Circulatory diseases" & Year == 2018)
+circulatory.2019.df <- filter(data, Cause.Group == "Circulatory diseases" & Year == 2019)
+circulatory.2020.df <- filter(data, Cause.Group == "Circulatory diseases" & Year == 2020)
+
+malignant.2015.df <- filter(data, Cause.Group == "Malignant neoplasms" & Year == 2015)
+malignant.2016.df <- filter(data, Cause.Group == "Malignant neoplasms" & Year == 2016)
+malignant.2017.df <- filter(data, Cause.Group == "Malignant neoplasms" & Year == 2017)
+malignant.2018.df <- filter(data, Cause.Group == "Malignant neoplasms" & Year == 2018)
+malignant.2019.df <- filter(data, Cause.Group == "Malignant neoplasms" & Year == 2019)
+malignant.2020.df <- filter(data, Cause.Group == "Malignant neoplasms" & Year == 2020)
+
+other.2015.df <- filter(data, Cause.Group == "Other select causes" & Year == 2015)
+other.2016.df <- filter(data, Cause.Group == "Other select causes" & Year == 2016)
+other.2017.df <- filter(data, Cause.Group == "Other select causes" & Year == 2017)
+other.2018.df <- filter(data, Cause.Group == "Other select causes" & Year == 2018)
+other.2019.df <- filter(data, Cause.Group == "Other select causes" & Year == 2019)
+other.2020.df <- filter(data, Cause.Group == "Other select causes" & Year == 2020)
+
+respiratory.2015.df <- filter(data, Cause.Group == "Respiratory diseases" & Year == 2015)
+respiratory.2016.df <- filter(data, Cause.Group == "Respiratory diseases" & Year == 2016)
+respiratory.2017.df <- filter(data, Cause.Group == "Respiratory diseases" & Year == 2017)
+respiratory.2018.df <- filter(data, Cause.Group == "Respiratory diseases" & Year == 2018)
+respiratory.2019.df <- filter(data, Cause.Group == "Respiratory diseases" & Year == 2019)
+respiratory.2020.df <- filter(data, Cause.Group == "Respiratory diseases" & Year == 2020)
+
+alz.deaths <- c(sum(alzheimer.2015.df$Number.of.Deaths), sum(alzheimer.2016.df$Number.of.Deaths), sum(alzheimer.2017.df$Number.of.Deaths), sum(alzheimer.2018.df$Number.of.Deaths), sum(alzheimer.2019.df$Number.of.Deaths), sum(alzheimer.2020.df$Number.of.Deaths))
+
+circ.deaths <- c(sum(circulatory.2015.df$Number.of.Deaths), sum(circulatory.2016.df$Number.of.Deaths), sum(circulatory.2017.df$Number.of.Deaths), sum(circulatory.2018.df$Number.of.Deaths), sum(circulatory.2019.df$Number.of.Deaths), sum(circulatory.2020.df$Number.of.Deaths))
+
+malignant.deaths <- c(sum(malignant.2015.df$Number.of.Deaths), sum(malignant.2016.df$Number.of.Deaths), sum(malignant.2017.df$Number.of.Deaths), sum(malignant.2018.df$Number.of.Deaths), sum(malignant.2019.df$Number.of.Deaths), sum(malignant.2020.df$Number.of.Deaths))
+
+other.deaths <- c(sum(other.2015.df$Number.of.Deaths), sum(other.2016.df$Number.of.Deaths), sum(other.2017.df$Number.of.Deaths), sum(other.2018.df$Number.of.Deaths), sum(other.2019.df$Number.of.Deaths), sum(other.2020.df$Number.of.Deaths))
+
+respiratory.deaths <- c(sum(respiratory.2015.df$Number.of.Deaths), sum(respiratory.2016.df$Number.of.Deaths), sum(respiratory.2017.df$Number.of.Deaths), sum(respiratory.2018.df$Number.of.Deaths), sum(respiratory.2019.df$Number.of.Deaths), sum(respiratory.2020.df$Number.of.Deaths))
+
+years <- c(2015, 2016, 2017, 2018, 2019, 2020)
+
+catDeaths.df <- data.frame(as.factor(years), alz.deaths, circ.deaths, malignant.deaths, other.deaths, respiratory.deaths)
+
+names(catDeaths.df) <- c("Year", "Alzheimer disease and dementia", "Circulatory diseases", "Malignant neoplasms", "Other select causes", "Respiratory diseases")
+
+# Number of deaths per category per year
+r <- rbind(c(catDeaths.df$`Alzheimer disease and dementia`, catDeaths.df$`Circulatory diseases`, catDeaths.df$`Malignant neoplasms`, catDeaths.df$`Other select causes`, catDeaths.df$`Respiratory diseases`))
+mat <- matrix(r, ncol = 5)
+
+dimnames(mat)[[1]] <- c(2015, 2016, 2017, 2018, 2019, 2020)
+dimnames(mat)[[2]] <- c("Alzheimer", "Circulatory", "Malignant", "Other", "Respiratory")
+
+# Percentage of deaths per category per year
+percent.2015 <- c(catDeaths.df[1,2]/sum(catDeaths.df[1,2:6]), catDeaths.df[1,3]/sum(catDeaths.df[1,2:6]), catDeaths.df[1,4]/sum(catDeaths.df[1,2:6]), catDeaths.df[1,5]/sum(catDeaths.df[1,2:6]), catDeaths.df[1,6]/sum(catDeaths.df[1,2:6]))
+
+percent.2016 <- c(catDeaths.df[2,2]/sum(catDeaths.df[2,2:6]), catDeaths.df[2,3]/sum(catDeaths.df[2,2:6]), catDeaths.df[2,4]/sum(catDeaths.df[2,2:6]), catDeaths.df[2,5]/sum(catDeaths.df[2,2:6]), catDeaths.df[2,6]/sum(catDeaths.df[2,2:6]))
+
+percent.2017 <- c(catDeaths.df[3,2]/sum(catDeaths.df[3,2:6]), catDeaths.df[3,3]/sum(catDeaths.df[3,2:6]), catDeaths.df[3,4]/sum(catDeaths.df[3,2:6]), catDeaths.df[3,5]/sum(catDeaths.df[3,2:6]), catDeaths.df[3,6]/sum(catDeaths.df[3,2:6]))
+
+percent.2018 <- c(catDeaths.df[4,2]/sum(catDeaths.df[4,2:6]), catDeaths.df[4,3]/sum(catDeaths.df[4,2:6]), catDeaths.df[4,4]/sum(catDeaths.df[4,2:6]), catDeaths.df[4,5]/sum(catDeaths.df[4,2:6]), catDeaths.df[4,6]/sum(catDeaths.df[4,2:6]))
+
+percent.2019 <- c(catDeaths.df[5,2]/sum(catDeaths.df[5,2:6]), catDeaths.df[5,3]/sum(catDeaths.df[5,2:6]), catDeaths.df[5,4]/sum(catDeaths.df[5,2:6]), catDeaths.df[5,5]/sum(catDeaths.df[5,2:6]), catDeaths.df[5,6]/sum(catDeaths.df[5,2:6]))
+
+percent.2020 <- c(catDeaths.df[6,2]/sum(catDeaths.df[6,2:6]), catDeaths.df[6,3]/sum(catDeaths.df[6,2:6]), catDeaths.df[6,4]/sum(catDeaths.df[6,2:6]), catDeaths.df[6,5]/sum(catDeaths.df[6,2:6]), catDeaths.df[6,6]/sum(catDeaths.df[6,2:6]))
+
+m.mat <- rbind(percent.2015, percent.2016, percent.2017, percent.2018, percent.2019, percent.2020)
+dimnames(m.mat)[[1]] <- c(2015, 2016, 2017, 2018, 2019, 2020)
+dimnames(m.mat)[[2]] <- c("Alzheimer", "Circulatory", "Malignant", "Other", "Respiratory")
+
+mm.df <- data.frame(m.mat[,1], m.mat[,2], m.mat[,3], m.mat[,4], m.mat[,5])
+names(mm.df) <- c("Alzheimer", "Circulatory", "Malignant", "Other", "Respiratory")
+
+# Highest number of deaths in each category per year. 1 = highest and 5 = lowest
+place.2015 <- c(4, 1, 2, 5, 3)
+place.2016 <- c(4, 1, 2, 5, 3)
+place.2017 <- c(4, 1, 2, 5, 3)
+place.2018 <- c(4, 1, 2, 5, 3)
+place.2019 <- c(3, 1, 2, 5, 4)
+place.2020 <- c(3, 1, 2, 5, 4)
+
+mt <- rbind(place.2015, place.2016, place.2017, place.2018, place.2019, place.2020)
+dimnames(mt)[[1]] <- c(2015, 2016, 2017, 2018, 2019, 2020)
+dimnames(mt)[[2]] <- c("Alzheimer", "Circulatory", "Malignant", "Other", "Respiratory")
+
+df.mat <- data.frame(mat)
+df.mt <- data.frame(mt)
+
+df.mat <- data.frame(Year = c(2015,2016,2017,2018,2019,2020), Alzheimer = df.mat$Alzheimer, Circulatory = df.mat$Circulatory, Malignant = df.mat$Malignant, Respiratory = df.mat$Respiratory, Other = df.mat$Other)
+
+df.mat
+df.mt
+mat
+mt
+
+```
+
+Lets plot every cause of death by year.
+
+```{r, echo=FALSE}
+# Alzheimer Plot
+alz.year.plot <-ggplot(data = df.mat, aes(x = Year, y = Alzheimer)) +
+  geom_point(aes(col = Alzheimer), alpha = 1, shape = 1, stroke = 2) +
+  xlab("Year") +
+  ylab("Deaths") +
+  ggtitle(label = "ALZHEIMER DEATHS PER YEAR") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  geom_line(aes(Year, Alzheimer))
+alz.year.plot
+
+# Circulatory Plot
+circ.year.plot <-ggplot(data = df.mat, aes(x = Year, y = Circulatory)) +
+  geom_point(aes(col = Circulatory), alpha = 1, shape = 3, stroke = 2) +
+  xlab("Year") +
+  ylab("Deaths") +
+  ggtitle(label = "CIRCULATORY DEATHS PER YEAR") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  geom_line(aes(Year, Circulatory))
+circ.year.plot
+
+# Malignant Plot
+malig.year.plot <-ggplot(data = df.mat, aes(x = Year, y = Malignant)) +
+  geom_point(aes(col = Malignant), alpha = 1, shape = 4, stroke = 2) +
+  xlab("Year") +
+  ylab("Deaths") +
+  ggtitle(label = "MALIGNANT DEATHS PER YEAR") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  geom_line(aes(Year, Malignant))
+malig.year.plot
+
+# Respiratory Plot
+resp.year.plot <-ggplot(data = df.mat, aes(x = Year, y = Respiratory)) +
+  geom_point(aes(col = Respiratory), alpha = 1, shape = 4, stroke = 2) +
+  xlab("Year") +
+  ylab("Deaths") +
+  ggtitle(label = "RESPIRATORY DEATHS PER YEAR") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  geom_line(aes(Year, Respiratory))
+resp.year.plot
+
+# Other Plot
+other.year.plot <-ggplot(data = df.mat, aes(x = Year, y = Other)) +
+  geom_point(aes(col = Other), alpha = 1, shape = 5, stroke = 2) +
+  xlab("Year") +
+  ylab("Deaths") +
+  ggtitle(label = "OTHER DEATHS PER YEAR") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 1)) +
+  geom_line(aes(Year, Other))
+other.year.plot
+```
+Four of the five plots above all have something in common. Every year, the number of deaths for each cause increases except for one plot. The respiratory deaths plot is the only plot that decreases from the year 2018 to 2019 and then decreases a little bit more from 2019 to 2020. How is this possible? Wasn't there a global pandemic for a respiratory virus? Most of the country was on lockdown restrictions because of what was called "The Coronavirus Pandemic". Covid-19 was said to be a deadly virus and that a lot of people were dying from the virus. If this claim is true, then why does the data from this analysis show otherwise? The things that make you go hmmm.....
+
+
